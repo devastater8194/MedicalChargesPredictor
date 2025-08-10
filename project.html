@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Charges Predictor - Professional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Lighter background for a clean look */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column; /* Allow content to stack */
+        }
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header .logo {
+            font-weight: 800;
+            font-size: 1.75rem; /* Larger logo */
+            color: #1a202c;
+        }
+        .nav-link {
+            padding: 0.75rem 1rem;
+            color: #4a5568;
+            font-weight: 600;
+            transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+            border-radius: 8px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #6366f1;
+            background-color: #e0e7ff; /* Light indigo background on hover/active */
+        }
+        .content-section {
+            display: none; /* Hidden by default */
+            padding: 2.5rem 1.5rem; /* Consistent padding */
+            flex-grow: 1; /* Allows sections to take available space */
+            justify-content: center;
+            align-items: flex-start; /* Align content to top within section */
+        }
+        .content-section.active {
+            display: flex; /* Display active section */
+        }
+        .container {
+            max-width: 960px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem 3rem;
+            margin: auto; /* Center the container horizontally */
+        }
+        h1 {
+            color: #1a202c;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+        h2 { /* For Sample Dataset heading and new sections */
+            color: #2d3748; /* Darker text for subheadings */
+        }
+        .input-group label {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .input-group input, .input-group select {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.85rem 1.15rem;
+            font-size: 1rem;
+            color: #2d3748;
+            background-color: #ffffff;
+            transition: all 0.2s ease-in-out;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+            background-color: #f0f4f8;
+        }
+        .btn-predict {
+            background-image: linear-gradient(to right, #6366f1, #4f46e5);
+            color: white;
+            padding: 1.1rem 2.5rem;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+        .btn-predict:hover {
+            background-image: linear-gradient(to right, #4f46e5, #4338ca);
+            box-shadow: 0 12px 25px rgba(99, 102, 241, 0.5);
+            transform: translateY(-3px);
+        }
+        .result-box {
+            background-color: #e0f7fa;
+            border: 1px solid #80deea;
+            border-radius: 10px;
+            padding: 1.75rem;
+            color: #006064;
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 150, 136, 0.1);
+        }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 2rem;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid #edf2f7;
+            color: #2d3748; /* Dark text for table content */
+        }
+        th {
+            background-color: #f7fafc;
+            font-weight: 700;
+            color: #2d3748;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:nth-child(even) {
+            background-color: #fbfdff;
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 0.6rem;
+            font-weight: 500;
+        }
+        .input-group.checkbox-group {
+            display: flex;
+            align-items: center;
+            padding-top: 0.5rem;
+        }
+        .input-group.checkbox-group input[type="checkbox"] {
+            margin-right: 0.75rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            accent-color: #6366f1;
+        }
+        .input-group.checkbox-group label {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        /* Radio button styles */
+        .form-radio {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            display: inline-block;
+            vertical-align: middle;
+            background-origin: border-box;
+            user-select: none;
+            flex-shrink: 0;
+            border-radius: 100%;
+            height: 1.25rem;
+            width: 1.25rem;
+            border: 2px solid #cbd5e1; /* Default border color */
+            transition: all 0.2s ease-in-out;
+        }
+
+        .form-radio:checked {
+            background-color: #6366f1; /* Indigo 500 */
+            border-color: #6366f1; /* Indigo 500 */
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .form-radio:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4); /* Focus ring */
+        }
+
+
+        /* About Us (Personal) specific styles */
+        .about-us-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .about-us-content .profile-photo-container {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .about-us-content .profile-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .about-us-content .profile-photo-placeholder {
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 1rem;
+        }
+        .about-us-content h2 {
+            font-size: 2.25rem; /* Larger name */
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.75rem;
+        }
+        .about-us-content p {
+            color: #4a5568;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            max-width: 700px;
+        }
+        .about-us-content .social-links a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #6366f1;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            margin: 0 0.5rem;
+        }
+        .about-us-content .social-links a:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+        .about-us-content .social-links svg {
+            margin-right: 0.5rem;
+        }
+
+        /* Home section specific styles */
+        .home-content {
+            text-align: center;
+            padding: 4rem 1.5rem;
+        }
+        .home-content h1 {
+            font-size: 3.75rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: #1a202c; /* Dark heading color */
+        }
+        .home-content p {
+            font-size: 1.25rem;
+            color: #4a5568;
+            margin-bottom: 2.5rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .home-content .call-to-action {
+            display: inline-block;
+            background-image: linear-gradient(to right, #6366f1, #4f46e5);
+            color: white;
+            padding: 1.2rem 3rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+        }
+        .home-content .call-to-action:hover {
+            background-image: linear-gradient(to right, #4f46e5, #4338ca);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.5);
+        }
+
+        /* New styles for About Acme Insurance section */
+        .about-company-content {
+            text-align: left; /* Align text left within this section */
+        }
+        .about-company-content h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+        .about-company-content p {
+            margin-bottom: 1rem;
+            line-height: 1.8;
+            color: #4a5568;
+        }
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        .image-upload-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 60%; /* Aspect ratio 16:10 for rectangular images */
+            background-color: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .image-upload-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        .image-upload-container input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .image-upload-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none; /* Hidden by default */
+        }
+        .image-upload-placeholder {
+            position: absolute;
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 1rem;
+            z-index: 5;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .header nav {
+                margin-top: 1rem;
+            }
+            .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            .container {
+                padding: 2rem 1.5rem;
+            }
+            h1 {
+                font-size: 2.5rem;
+            }
+            .home-content h1 {
+                font-size: 2.75rem;
+            }
+            .home-content p {
+                font-size: 1rem;
+            }
+            .home-content .call-to-action {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+            .image-gallery {
+                grid-template-columns: 1fr; /* Stack images on small screens */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="header">
+        <div class="logo">MedicalPredict</div>
+        <nav>
+            <a href="#home" class="nav-link active" data-target="home-section">Home</a>
+            <a href="#predictor" class="nav-link" data-target="predictor-section">Predictor</a>
+            <a href="#about" class="nav-link" data-target="about-us-section">About Us</a>
+        </nav>
+    </header>
+
+    <section id="home-section" class="content-section active items-center">
+        <div class="container text-center">
+            <div class="home-content">
+                <h1 class="text-gray-900">Empowering Your Health Decisions with Accurate Predictions</h1>
+                <p>Understand potential medical costs with our intelligent predictor, built using advanced machine learning to provide you with reliable insights based on various health factors.</p>
+                <button class="call-to-action" data-target="predictor-section">Get Started - Predict Now!</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="predictor-section" class="content-section">
+        <div class="container">
+            <h1 class="text-4xl font-extrabold text-center mb-10">Medical Charges Predictor</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-10">
+                <div class="input-group flex flex-col">
+                    <label for="age">Age:</label>
+                    <input type="number" id="age" name="age" placeholder="e.g., 30" class="w-full" min="0" required>
+                    <p id="age-error" class="error-message hidden"></p>
+                </div>
+
+                <div class="input-group flex flex-col">
+                    <label for="bmi">BMI:</label>
+                    <input type="number" id="bmi" name="bmi" step="0.01" placeholder="e.g., 25.5" class="w-full" min="0" required>
+                    <p id="bmi-error" class="error-message hidden"></p>
+                </div>
+
+                <div class="input-group flex flex-col">
+                    <label for="children">Number of Children:</label>
+                    <input type="number" id="children" name="children" placeholder="e.g., 2" class="w-full" min="0" required>
+                    <p id="children-error" class="error-message hidden"></p>
+                </div>
+
+                <div class="input-group flex flex-col">
+                    <label for="region">Region:</label>
+                    <select id="region" name="region" class="w-full" required>
+                        <option value="">Select a region</option>
+                        <option value="northwest">Northwest</option>
+                        <option value="northeast">Northeast</option>
+                        <option value="southwest">Southwest</option>
+                        <option value="southeast">Southeast</option>
+                    </select>
+                    <p id="region-error" class="error-message hidden"></p>
+                </div>
+
+                <div class="input-group checkbox-group col-span-full md:col-span-1">
+                    <input type="checkbox" id="smoker" name="smoker">
+                    <label for="smoker">Smoker</label>
+                </div>
+
+                <div class="input-group flex flex-col col-span-full md:col-span-1">
+                    <label>Gender:</label>
+                    <div class="flex items-center space-x-6 mt-2">
+                        <label for="male" class="inline-flex items-center">
+                            <input type="radio" id="male" name="sex" value="male" class="form-radio text-indigo-600" checked>
+                            <span class="ml-2 text-gray-700 font-normal">Male</span>
+                        </label>
+                        <label for="female" class="inline-flex items-center">
+                            <input type="radio" id="female" name="sex" value="female" class="form-radio text-indigo-600">
+                            <span class="ml-2 text-gray-700 font-normal">Female</span>
+                        </label>
+                    </div>
+                    <p id="sex-error" class="error-message hidden"></p>
+                </div>
+
+            </div>
+
+            <button id="predict-btn" class="btn-predict w-full mb-8">Predict Medical Charges</button>
+
+            <div id="prediction-result" class="result-box hidden">
+                </div>
+
+            <div id="error-message-general" class="error-message hidden text-center mt-6">
+                </div>
+
+            <div class="about-company-content mt-16 pt-8 border-t border-gray-200">
+                <h2 class="text-3xl font-bold text-center mb-6">About Acme Insurance Company</h2>
+                <p>
+                    Welcome to Acme Insurance, your trusted partner in health and financial security. For over two decades, we've been dedicated to providing comprehensive and affordable insurance solutions tailored to the diverse needs of individuals and families. Our mission is to empower you to live a healthier, more secure life by alleviating the financial burden of unexpected medical costs.
+                </p>
+                <p>
+                    At Acme, we believe in transparency, integrity, and putting our customers first. Our team of experienced professionals works tirelessly to ensure you receive the best coverage and support, guiding you through every step of your insurance journey. We pride ourselves on our innovative approach to healthcare, continuously seeking ways to offer more value and peace of mind.
+                </p>
+
+                <div class="image-gallery">
+                    <div class="image-upload-container">
+                        <input type="file" id="company-photo-1-upload" accept="image/*">
+                        <img id="company-photo-1-preview" src="" alt="Acme Photo 1" class="hidden">
+                        <span id="company-photo-1-placeholder" class="image-upload-placeholder">Click to add Company Photo 1</span>
+                    </div>
+                    <div class="image-upload-container">
+                        <input type="file" id="company-photo-2-upload" accept="image/*">
+                        <img id="company-photo-2-preview" src="" alt="Acme Photo 2" class="hidden">
+                        <span id="company-photo-2-placeholder" class="image-upload-placeholder">Click to add Company Photo 2</span>
+                    </div>
+                    <div class="image-upload-container">
+                        <input type="file" id="company-photo-3-upload" accept="image/*">
+                        <img id="company-photo-3-preview" src="" alt="Acme Photo 3" class="hidden">
+                        <span id="company-photo-3-placeholder" class="image-upload-placeholder">Click to add Company Photo 3</span>
+                    </div>
+                </div>
+
+                <p>
+                    Our commitment extends beyond just policies. We actively engage with communities, promote wellness programs, and invest in technologies like this Medical Charges Predictor to equip you with valuable insights. We're constantly evolving to meet the demands of a changing healthcare landscape, ensuring our offerings remain relevant and beneficial.
+                </p>
+                <p>
+                    Thank you for considering Acme Insurance. We look forward to building a long-lasting relationship based on trust, exceptional service, and a shared vision for a healthier future. For more information, please explore our website or contact our dedicated customer service team.
+                </p>
+            </div>
+            </div>
+    </section>
+
+    <section id="about-us-section" class="content-section">
+        <div class="container about-us-content">
+            <h1 class="text-4xl font-extrabold mb-8">About Us</h1>
+            <div class="profile-photo-container">
+                <input type="file" id="profile-photo-upload" accept="image/*" class="hidden">
+                <img id="profile-photo-preview" src="" alt="Profile Photo" class="profile-photo hidden">
+                <span id="profile-photo-placeholder" class="profile-photo-placeholder">Click to upload photo</span>
+            </div>
+            <h2 id="your-name">Your Name Here</h2>
+            <p class="text-lg">
+                Hi there! I'm the creator of this Medical Charges Predictor. My goal is to provide a user-friendly tool that helps individuals estimate potential medical costs, contributing to better financial planning for healthcare. This project leverages machine learning techniques to analyze key health demographics and provide insightful predictions.
+            </p>
+            <p class="text-lg mb-6">
+                I'm passionate about data science, machine learning, and building practical applications that make a difference. Connect with me on LinkedIn to learn more about my work and professional journey.
+            </p>
+            <div class="social-links">
+                <a id="linkedin-profile-link" href="#" target="_blank" rel="noopener noreferrer">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clip-rule="evenodd" />
+                    </svg>
+                    LinkedIn Profile
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const predictBtn = document.getElementById('predict-btn');
+            const predictionResult = document.getElementById('prediction-result');
+            // const sampleDatasetTableBody = document.querySelector('#sample-dataset-table tbody'); // REMOVED
+            const generalErrorMessage = document.getElementById('error-message-general');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const callToActionBtn = document.querySelector('.home-content .call-to-action');
+
+            // About Us (Personal) elements
+            const profilePhotoUpload = document.getElementById('profile-photo-upload');
+            const profilePhotoPreview = document.getElementById('profile-photo-preview');
+            const profilePhotoPlaceholder = document.getElementById('profile-photo-placeholder');
+            const profilePhotoContainer = document.querySelector('.profile-photo-container');
+            const yourNameElement = document.getElementById('your-name');
+            const linkedinProfileLink = document.getElementById('linkedin-profile-link');
+
+            // New About Acme Insurance Company photo elements
+            const companyPhoto1Upload = document.getElementById('company-photo-1-upload');
+            const companyPhoto1Preview = document.getElementById('company-photo-1-preview');
+            const companyPhoto1Placeholder = document.getElementById('company-photo-1-placeholder');
+            const companyPhoto1Container = document.querySelector('.image-gallery div:nth-child(1)');
+
+            const companyPhoto2Upload = document.getElementById('company-photo-2-upload');
+            const companyPhoto2Preview = document.getElementById('company-photo-2-preview');
+            const companyPhoto2Placeholder = document.getElementById('company-photo-2-placeholder');
+            const companyPhoto2Container = document.querySelector('.image-gallery div:nth-child(2)');
+
+            const companyPhoto3Upload = document.getElementById('company-photo-3-upload');
+            const companyPhoto3Preview = document.getElementById('company-photo-3-preview');
+            const companyPhoto3Placeholder = document.getElementById('company-photo-3-placeholder');
+            const companyPhoto3Container = document.querySelector('.image-gallery div:nth-child(3)');
+
+
+            // --- Navigation Logic ---
+            const showSection = (targetId) => {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(targetId).classList.add('active');
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.dataset.target === targetId) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = e.target.dataset.target;
+                    showSection(targetId);
+                });
+            });
+
+            // Handle "Get Started" button on Home page
+            if (callToActionBtn) {
+                callToActionBtn.addEventListener('click', () => {
+                    showSection(callToActionBtn.dataset.target);
+                });
+            }
+
+            // --- Form Validation and Prediction Logic ---
+
+            const showError = (elementId, message) => {
+                const errorElement = document.getElementById(elementId);
+                if (errorElement) {
+                    errorElement.textContent = message;
+                    errorElement.classList.remove('hidden');
+                }
+            };
+
+            const hideError = (elementId) => {
+                const errorElement = document.getElementById(elementId);
+                if (errorElement) {
+                    errorElement.classList.add('hidden');
+                }
+            };
+
+            const validateInputs = () => {
+                let isValid = true;
+                hideError('error-message-general'); // Clear general error on re-validation
+
+                // Validate Age
+                const ageInput = document.getElementById('age');
+                const age = parseFloat(ageInput.value);
+                if (isNaN(age) || age < 0 || age > 120) { // Added max age for realism
+                    showError('age-error', 'Please enter a valid age (0-120).');
+                    isValid = false;
+                } else {
+                    hideError('age-error');
+                }
+
+                // Validate BMI
+                const bmiInput = document.getElementById('bmi');
+                const bmi = parseFloat(bmiInput.value);
+                if (isNaN(bmi) || bmi < 10 || bmi > 60) { // Added realistic BMI range
+                    showError('bmi-error', 'Please enter a valid BMI (10-60).');
+                    isValid = false;
+                } else {
+                    hideError('bmi-error');
+                }
+
+                // Validate Children
+                const childrenInput = document.getElementById('children');
+                const children = parseInt(childrenInput.value);
+                if (isNaN(children) || children < 0 || children > 10) { // Added realistic max children
+                    showError('children-error', 'Please enter a valid number of children (0-10).');
+                    isValid = false;
+                } else {
+                    hideError('children-error');
+                }
+
+                // Validate Region
+                const regionSelect = document.getElementById('region');
+                if (regionSelect.value === '') {
+                    showError('region-error', 'Please select a region.');
+                    isValid = false;
+                } else {
+                    hideError('region-error');
+                }
+
+                // Validate Sex (at least one radio button checked)
+                const sexRadios = document.querySelectorAll('input[name="sex"]');
+                let sexSelected = false;
+                for (const radio of sexRadios) {
+                    if (radio.checked) {
+                        sexSelected = true;
+                        break;
+                    }
+                }
+                if (!sexSelected) {
+                    showError('sex-error', 'Please select your gender.');
+                    isValid = false;
+                } else {
+                    hideError('sex-error');
+                }
+
+
+                return isValid;
+            };
+
+            predictBtn.addEventListener('click', async () => {
+                predictionResult.classList.add('hidden'); // Hide previous result
+                generalErrorMessage.classList.add('hidden'); // Hide general error before new attempt
+
+                if (!validateInputs()) {
+                    generalErrorMessage.textContent = 'Please correct the highlighted errors.';
+                    generalErrorMessage.classList.remove('hidden');
+                    return;
+                }
+
+                const age = parseFloat(document.getElementById('age').value);
+                const bmi = parseFloat(document.getElementById('bmi').value);
+                const smoker = document.getElementById('smoker').checked;
+                const children = parseInt(document.getElementById('children').value);
+                const region = document.getElementById('region').value;
+                const sex = document.querySelector('input[name="sex"]:checked').value; // Get selected gender
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/predict', { // Use explicit http://127.0.0.1:5000
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ age, bmi, smoker, children, region, sex }), // Include sex
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Prediction failed');
+                    }
+
+                    const data = await response.json();
+                    predictionResult.textContent = `Predicted Medical Charges: $${data.predicted_charges.toFixed(2)}`;
+                    predictionResult.classList.remove('hidden');
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    generalErrorMessage.textContent = `Error: ${error.message}. Please ensure the backend server is running and accessible (e.g., http://127.0.0.1:5000).`;
+                    generalErrorMessage.classList.remove('hidden');
+                    predictionResult.classList.add('hidden');
+                }
+            });
+
+            // --- REMOVED Sample Dataset Logic ---
+            // const fetchAndDisplayDataset = async () => { /* ... */ };
+            // fetchAndDisplayDataset(); // Removed call
+
+            // --- About Us (Personal) Photo Upload Logic ---
+            profilePhotoContainer.addEventListener('click', () => {
+                profilePhotoUpload.click(); // Trigger hidden file input
+            });
+
+            profilePhotoUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        profilePhotoPreview.src = e.target.result;
+                        profilePhotoPreview.classList.remove('hidden');
+                        profilePhotoPlaceholder.classList.add('hidden');
+                        localStorage.setItem('profilePhoto', e.target.result); // Save to local storage
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    profilePhotoPreview.classList.add('hidden');
+                    profilePhotoPlaceholder.classList.remove('hidden');
+                    profilePhotoPreview.src = ''; // Clear image if no file selected
+                    localStorage.removeItem('profilePhoto'); // Remove from local storage
+                }
+            });
+
+            // Load saved personal photo on page load
+            const savedPhoto = localStorage.getItem('profilePhoto');
+            if (savedPhoto) {
+                profilePhotoPreview.src = savedPhoto;
+                profilePhotoPreview.classList.remove('hidden');
+                profilePhotoPlaceholder.classList.add('hidden');
+            }
+
+
+            // Handle Name input
+            yourNameElement.addEventListener('click', () => {
+                const currentName = yourNameElement.textContent === 'Your Name Here' ? '' : yourNameElement.textContent;
+                const newName = prompt('Enter your name:', currentName);
+                if (newName !== null && newName.trim() !== '') {
+                    yourNameElement.textContent = newName.trim();
+                    localStorage.setItem('profileName', newName.trim());
+                } else if (newName !== null) { // User cleared the input
+                    yourNameElement.textContent = 'Your Name Here';
+                    localStorage.removeItem('profileName');
+                }
+            });
+
+            // Load saved name on page load
+            const savedName = localStorage.getItem('profileName');
+            if (savedName) {
+                yourNameElement.textContent = savedName;
+            }
+
+            // Handle LinkedIn URL input
+            linkedinProfileLink.addEventListener('click', (e) => {
+                // Only prevent default if current href is placeholder
+                if (linkedinProfileLink.href.includes('#') || linkedinProfileLink.href.includes('YOUR_LINKEDIN_PROFILE_URL')) {
+                    e.preventDefault();
+                }
+
+                const currentUrl = linkedinProfileLink.href === '#' || linkedinProfileLink.href.includes('YOUR_LINKEDIN_PROFILE_URL') ? '' : linkedinProfileLink.href;
+                const newLinkedIn = prompt('Enter your LinkedIn profile URL:', currentUrl);
+                if (newLinkedIn !== null && newLinkedIn.trim() !== '') {
+                    // Basic URL validation
+                    let formattedUrl = newLinkedIn.trim();
+                    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+                        formattedUrl = 'https://' + formattedUrl; // Prepend https if missing
+                    }
+                    linkedinProfileLink.href = formattedUrl;
+                    localStorage.setItem('linkedinUrl', formattedUrl);
+                    // Open in new tab if a new URL was entered successfully
+                    window.open(formattedUrl, '_blank');
+                } else if (newLinkedIn !== null) { // User cleared the input
+                    linkedinProfileLink.href = '#';
+                    localStorage.removeItem('linkedinUrl');
+                }
+            });
+
+            // Load saved LinkedIn URL on page load
+            const savedLinkedIn = localStorage.getItem('linkedinUrl');
+            if (savedLinkedIn) {
+                linkedinProfileLink.href = savedLinkedIn;
+            } else {
+                 linkedinProfileLink.href = 'YOUR_LINKEDIN_PROFILE_URL'; // Ensure it's not null/undefined for initial display
+            }
+
+
+            // --- New Company Photo Upload Logic (Repeated for 3 photos) ---
+            const setupCompanyPhotoUpload = (uploadElement, previewElement, placeholderElement, containerElement, localStorageKey) => {
+                containerElement.addEventListener('click', () => {
+                    uploadElement.click();
+                });
+
+                uploadElement.addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            previewElement.src = e.target.result;
+                            previewElement.classList.remove('hidden');
+                            placeholderElement.classList.add('hidden');
+                            localStorage.setItem(localStorageKey, e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        previewElement.classList.add('hidden');
+                        placeholderElement.classList.remove('hidden');
+                        previewElement.src = '';
+                        localStorage.removeItem(localStorageKey);
+                    }
+                });
+
+                // Load saved photo on page load
+                const savedCompanyPhoto = localStorage.getItem(localStorageKey);
+                if (savedCompanyPhoto) {
+                    previewElement.src = savedCompanyPhoto;
+                    previewElement.classList.remove('hidden');
+                    placeholderElement.classList.add('hidden');
+                }
+            };
+
+            setupCompanyPhotoUpload(companyPhoto1Upload, companyPhoto1Preview, companyPhoto1Placeholder, companyPhoto1Container, 'companyPhoto1');
+            setupCompanyPhotoUpload(companyPhoto2Upload, companyPhoto2Preview, companyPhoto2Placeholder, companyPhoto2Container, 'companyPhoto2');
+            setupCompanyPhotoUpload(companyPhoto3Upload, companyPhoto3Preview, companyPhoto3Placeholder, companyPhoto3Container, 'companyPhoto3');
+
+
+            // Initial load: show home section
+            showSection('home-section');
+        });
+    </script>
+</body>
+</html>
